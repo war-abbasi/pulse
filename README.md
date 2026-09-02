@@ -92,8 +92,8 @@ Open `http://localhost:5173`, register an account, and you are on the dashboard.
 
 ## Running tests
 
-**Backend** — 21 unit tests across the three services, with mocked Mongoose
-models. No database required.
+**Backend** — 30 unit tests across the services and the rate-limit guard, with
+mocked Mongoose models. No database required.
 
 ```bash
 cd backend && npm test
@@ -124,7 +124,9 @@ Add `:cov` to either command for a coverage report.
 │       │   └── strategies/         passport-jwt token verification
 │       ├── users/                  User schema, bcrypt hashing, public mapper
 │       ├── notifications/          Notification CRUD, owner-scoped queries
-│       ├── common/pipes/           ParseObjectIdPipe
+│       ├── common/
+│       │   ├── guards/             RateLimitGuard
+│       │   └── pipes/              ParseObjectIdPipe
 │       └── app.module.ts           Config, Mongoose connection, feature modules
 │
 └── frontend/                       React SPA
@@ -161,7 +163,7 @@ All `/notifications` routes require `Authorization: Bearer <token>`.
 
 Errors: `400` failed validation or a malformed id, `401` missing/invalid token or
 bad credentials, `404` the notification does not exist **or does not belong to the
-caller**, `409` username already taken.
+caller**, `409` username already taken, `429` too many credential attempts.
 
 `PATCH` is the primary update verb because every field is optional and dismissing a
 banner sends only `{ "isClosed": true }`. `PUT` is accepted as an alias.
@@ -180,6 +182,25 @@ banner sends only `{ "isClosed": true }`. `PUT` is accepted as an alias.
 
 The app shell is a persistent left sidebar that collapses into a drawer below
 1024px.
+
+---
+
+## Hardening
+
+**Security headers** via `helmet`. The content security policy is disabled
+because this service returns only JSON, and the resource policy is set to
+`cross-origin` so the browser app on another port can still read responses.
+
+**Rate limiting** on the credential endpoints — 10 login attempts and 5
+registrations per minute per client, per route, answered with `429` and a
+`Retry-After` header. The two routes count separately, so exhausting one does
+not lock the other.
+
+This is a small in-house guard rather than `@nestjs/throttler`, which declares
+support only up to NestJS 11; installing it here would force everyone cloning
+the repo to run `npm install --legacy-peer-deps`. The counters are per process,
+which is the right trade-off for a single instance — behind a load balancer a
+shared store such as Redis would be needed to enforce one global limit.
 
 ---
 
