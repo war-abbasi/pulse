@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
 
-const TOKEN_KEY = 'propel.token';
+const TOKEN_KEY = 'pulse.token';
 
 export const tokenStorage = {
   get: (): string | null => localStorage.getItem(TOKEN_KEY),

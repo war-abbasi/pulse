@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ThemeContext, type Theme } from './theme-context';
 
-const THEME_KEY = 'propel.theme';
+const THEME_KEY = 'pulse.theme';
 
 function readInitialTheme(): Theme {
   const stored = localStorage.getItem(THEME_KEY);

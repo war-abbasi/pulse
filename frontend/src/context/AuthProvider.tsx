@@ -4,7 +4,7 @@ import { authService } from '../services/authService';
 import type { AuthResponse, LoginPayload, PublicUser, RegisterPayload } from '../types';
 import { AuthContext } from './auth-context';
 
-const USER_KEY = 'propel.user';
+const USER_KEY = 'pulse.user';
 
 /**
  * Reads the persisted user synchronously. Doing this in useState's initialiser

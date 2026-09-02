@@ -1,4 +1,4 @@
-# Propel — Notifications System
+# Pulse — Notifications System
 
 A full-stack personal notifications dashboard. Authenticated users create, view,
 edit and delete notifications categorised as `INFO`, `WARNING` or `ERROR`. Recent
