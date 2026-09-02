@@ -99,9 +99,10 @@ models. No database required.
 cd backend && npm test
 ```
 
-**Frontend** — 53 tests covering the validation rules, the 90-second
-auto-dismiss timer, the banner limit and summary rules, route protection, and
-the notification state transitions.
+**Frontend** — 63 tests covering the validation rules, the 90-second
+auto-dismiss timer, the banner limit and summary rules, route protection, the
+board's drag-to-recategorise behaviour, and the notification state
+transitions.
 
 ```bash
 cd frontend && npm test
@@ -130,8 +131,8 @@ Add `:cov` to either command for a coverage report.
     └── src/
         ├── components/
         │   ├── ui/                 Button, form fields, alert, logo
-        │   ├── layout/             Navbar, page shell, theme toggle
-        │   └── notifications/      Banners, cards, the shared form
+        │   ├── layout/             Sidebar, app shell, theme toggle
+        │   └── notifications/      Banners, list cards, board cards, the form
         ├── context/                Auth, notifications and theme providers
         ├── hooks/                  useAuth, useNotifications, useAutoDismissInfo
         ├── pages/                  One component per route
@@ -167,6 +168,21 @@ banner sends only `{ "isClosed": true }`. `PUT` is accepted as an alias.
 
 ---
 
+## Screens
+
+| Route                | Screen                                                                 |
+| -------------------- | ---------------------------------------------------------------------- |
+| `/dashboard`         | Overview — live banners, portfolio metrics, severity split, recent items |
+| `/board`             | Triage board — three severity lanes, drag a card to recategorise it      |
+| `/notifications`     | Full library with category filters and search                           |
+| `/notifications/new` | Create form                                                             |
+| `/notifications/:id` | Edit form, pre-populated                                                |
+
+The app shell is a persistent left sidebar that collapses into a drawer below
+1024px.
+
+---
+
 ## Design decisions
 
 **State management — React Context.** The notification list lives in a context
@@ -184,6 +200,12 @@ index on `{ userId: 1, createdAt: -1 }` matches the only list query the app make
 **Category as a string enum.** Values survive serialisation and are legible in the
 database. The original used a bare numeric enum, which is why its
 `category.toString() === 'INFO'` check silently never matched.
+
+**Board drag-and-drop uses the native HTML5 API.** The three lanes are the
+severity categories, so dragging a card is a `PATCH` of its `category` — no new
+schema field, and the board is a view of data the app already had. Native drag
+events avoid a dependency, and because they are mouse-only, each card also
+carries arrow buttons that perform the same move from the keyboard.
 
 **Auto-dismiss timing.** The 90-second countdown for `INFO` starts when a
 notification first becomes visible in the session rather than from its creation

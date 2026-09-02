@@ -8,6 +8,8 @@ import { DashboardPage } from './pages/DashboardPage';
 import { EditNotificationPage } from './pages/EditNotificationPage';
 import { LoginPage } from './pages/LoginPage';
 import { NewNotificationPage } from './pages/NewNotificationPage';
+import { NotificationsListPage } from './pages/NotificationsListPage';
+import { BoardPage } from './pages/BoardPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { RegisterPage } from './pages/RegisterPage';
 
@@ -31,6 +33,8 @@ export default function App() {
 
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/board" element={<BoardPage />} />
+                  <Route path="/notifications" element={<NotificationsListPage />} />
                   <Route path="/notifications/new" element={<NewNotificationPage />} />
                   <Route path="/notifications/:id" element={<EditNotificationPage />} />
                 </Route>
