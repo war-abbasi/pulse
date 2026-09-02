@@ -1,8 +1,25 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 
 @Module({
+  imports: [
+    // isGlobal means every other module can inject ConfigService without
+    // importing ConfigModule again.
+    ConfigModule.forRoot({ isGlobal: true }),
+
+    // forRootAsync so the connection string comes from config rather than
+    // being hardcoded. getOrThrow fails fast at boot if MONGO_URI is missing,
+    // instead of silently connecting to the wrong place.
+    MongooseModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        uri: config.getOrThrow<string>('MONGO_URI'),
+      }),
+    }),
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
