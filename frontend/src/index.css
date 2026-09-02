@@ -1,0 +1,122 @@
+@import 'tailwindcss';
+
+/* Class-based dark mode: the theme toggle puts .dark on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand blue — the primary action colour. */
+  --color-brand-50: #eff4ff;
+  --color-brand-100: #dbe6fe;
+  --color-brand-200: #bfd3fe;
+  --color-brand-300: #93b4fd;
+  --color-brand-400: #608cfa;
+  --color-brand-500: #3b6bf6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+  --color-brand-900: #1e3a8a;
+
+  /* Accent violet/fuchsia — used only in the headline gradient and marks. */
+  --color-accent-400: #c084fc;
+  --color-accent-500: #a855f7;
+  --color-accent-600: #9333ea;
+  --color-fuchsia-brand: #d946ef;
+
+  /* Category colours. Deliberately distinct hues, not just shades. */
+  --color-info: #2563eb;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+}
+
+/*
+ * Semantic tokens. Components reference these rather than raw palette values,
+ * so the dark theme is defined once here instead of with a dark: variant on
+ * every element.
+ */
+:root {
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f8fafc;
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --text-primary: #0b1220;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --grid-line: rgb(15 23 42 / 0.045);
+  --glow-a: rgb(217 70 239 / 0.14);
+  --glow-b: rgb(37 99 235 / 0.14);
+}
+
+.dark {
+  --surface: #0b1220;
+  --surface-raised: #131c31;
+  --surface-sunken: #070c17;
+  --border-subtle: #1e293b;
+  --border-strong: #334155;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --grid-line: rgb(148 163 184 / 0.06);
+  --glow-a: rgb(217 70 239 / 0.16);
+  --glow-b: rgb(37 99 235 / 0.18);
+}
+
+@layer base {
+  * {
+    border-color: var(--border-subtle);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--surface-sunken);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Visible focus ring for keyboard users on every interactive element. */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .text-primary { color: var(--text-primary); }
+  .text-secondary { color: var(--text-secondary); }
+  .text-muted { color: var(--text-muted); }
+  .bg-surface { background-color: var(--surface); }
+  .bg-raised { background-color: var(--surface-raised); }
+  .bg-sunken { background-color: var(--surface-sunken); }
+  .border-subtle { border-color: var(--border-subtle); }
+  .border-strong { border-color: var(--border-strong); }
+
+  /* The magenta -> violet -> blue headline treatment from the brand. */
+  .text-gradient {
+    background-image: linear-gradient(
+      100deg,
+      var(--color-fuchsia-brand) 0%,
+      var(--color-accent-500) 42%,
+      var(--color-brand-600) 100%
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  /* Faint graph-paper grid plus two soft colour glows. */
+  .bg-canvas {
+    background-color: var(--surface-sunken);
+    background-image:
+      radial-gradient(60rem 32rem at 18% -12%, var(--glow-a), transparent 60%),
+      radial-gradient(52rem 30rem at 88% -4%, var(--glow-b), transparent 62%),
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 46px 46px, 46px 46px;
+  }
+}
