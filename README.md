@@ -92,16 +92,22 @@ Open `http://localhost:5173`, register an account, and you are on the dashboard.
 
 ## Running tests
 
+**Backend** — 21 unit tests across the three services, with mocked Mongoose
+models. No database required.
+
 ```bash
 cd backend && npm test
 ```
 
-21 unit tests across the three services, using mocked Mongoose models — no
-database is required to run them.
+**Frontend** — 53 tests covering the validation rules, the 90-second
+auto-dismiss timer, the banner limit and summary rules, route protection, and
+the notification state transitions.
 
 ```bash
-cd backend && npm run test:cov
+cd frontend && npm test
 ```
+
+Add `:cov` to either command for a coverage report.
 
 ---
 
@@ -131,6 +137,7 @@ cd backend && npm run test:cov
         ├── pages/                  One component per route
         ├── services/               axios instance and API calls
         ├── lib/                    Validation rules, category styles, helpers
+        ├── test/                   Test setup
         └── types/                  Shared domain types
 ```
 
