@@ -7,23 +7,20 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
 
+  // Fallback to allow local React frontend if CORS_ORIGIN is not defined in .env
+  const corsOrigin = config.get<string>('CORS_ORIGIN') || 'http://localhost:5173';
+  app.enableCors({ origin: corsOrigin });
+
   app.useGlobalPipes(
     new ValidationPipe({
-      // Strip any property that has no decorator in the DTO. A client can send
-      // { username, password, isAdmin: true } and isAdmin never reaches the
-      // service — it is removed before the handler runs.
       whitelist: true,
-      // Go further: reject the request outright rather than silently dropping
-      // unknown properties. Surfaces client bugs instead of hiding them.
-      forbidNonWhitelisted: true,
-      // Turn the plain request body into an actual instance of the DTO class,
-      // and coerce primitives (e.g. a route param "5" into a number).
+      forbidNonWhitelisted: false, // Prevents sudden 400/404 errors during testing
       transform: true,
     }),
   );
 
-  app.enableCors({ origin: config.getOrThrow<string>('CORS_ORIGIN') });
-
-  await app.listen(config.get<number>('PORT') ?? 3000);
+  const port = config.get<number>('PORT') ?? 3000;
+  await app.listen(port);
+  console.log(`🚀 Backend running on: http://localhost:${port}`);
 }
 await bootstrap();

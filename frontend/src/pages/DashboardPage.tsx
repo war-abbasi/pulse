@@ -5,7 +5,7 @@ import { Alert } from '../components/ui/Alert';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
-import { CATEGORY_OPTIONS, CATEGORY_STYLES } from '../lib/category';
+import { CATEGORY_OPTIONS, CATEGORY_STYLES, categoryStyle } from '../lib/category';
 import { cn } from '../lib/cn';
 import { timeAgo } from '../lib/time';
 import { Category } from '../types';
@@ -188,7 +188,7 @@ export function DashboardPage() {
           ) : (
             <ul className="divide-y divide-[var(--border-subtle)]">
               {recent.map((item) => {
-                const style = CATEGORY_STYLES[item.category];
+                const style = categoryStyle(item.category);
                 return (
                   <li key={item.id}>
                     <Link

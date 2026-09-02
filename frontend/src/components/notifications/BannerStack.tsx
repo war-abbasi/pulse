@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { useAutoDismissInfo } from '../../hooks/useAutoDismissInfo';
 import { useNotifications } from '../../hooks/useNotifications';
 import { NotificationBanner } from './NotificationBanner';
 
@@ -19,11 +18,6 @@ export function BannerStack() {
     () => notifications.filter((item) => !item.isClosed),
     [notifications],
   );
-
-  // Timers run for every open INFO notification, including while the summary
-  // banner is showing, so the 90-second rule does not depend on what is
-  // currently rendered.
-  useAutoDismissInfo(notifications, dismiss);
 
   if (open.length === 0) return null;
 

@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { CATEGORY_STYLES } from '../../lib/category';
+import { categoryStyle } from '../../lib/category';
 import { cn } from '../../lib/cn';
 import { timeAgo } from '../../lib/time';
 import type { UserNotification } from '../../types';
@@ -17,7 +17,7 @@ export const NotificationBanner = memo(function NotificationBanner({
   notification,
   onDismiss,
 }: Props) {
-  const style = CATEGORY_STYLES[notification.category];
+  const style = categoryStyle(notification.category);
 
   return (
     <div

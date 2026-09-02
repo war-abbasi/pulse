@@ -1,8 +1,9 @@
 import { memo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CATEGORY_STYLES } from '../../lib/category';
+import { categoryStyle } from '../../lib/category';
 import { cn } from '../../lib/cn';
 import { timeAgo } from '../../lib/time';
+import { getErrorMessage } from '../../services/api';
 import type { UserNotification } from '../../types';
 import { Button } from '../ui/Button';
 
@@ -17,12 +18,18 @@ export const NotificationCard = memo(function NotificationCard({
 }: Props) {
   const [isConfirming, setIsConfirming] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const style = CATEGORY_STYLES[notification.category];
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const style = categoryStyle(notification.category);
 
   const handleDelete = async () => {
     setIsDeleting(true);
+    setDeleteError(null);
     try {
       await onDelete(notification.id);
+    } catch (error) {
+      // Without this the request fails, the card stays put and the user is
+      // told nothing — they walk away believing it was deleted.
+      setDeleteError(getErrorMessage(error, 'Could not delete this notification.'));
     } finally {
       // The component usually unmounts on success; resetting matters for the
       // failure path, where the card stays on screen.
@@ -58,6 +65,12 @@ export const NotificationCard = memo(function NotificationCard({
             {notification.body}
           </p>
           <p className="mt-2.5 text-xs text-muted">Created {timeAgo(notification.createdAt)}</p>
+
+          {deleteError && (
+            <p role="alert" className="mt-2 text-xs font-semibold text-red-600 dark:text-red-400">
+              {deleteError}
+            </p>
+          )}
         </div>
 
         <div className="flex shrink-0 items-center gap-2">

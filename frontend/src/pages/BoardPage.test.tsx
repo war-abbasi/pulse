@@ -5,12 +5,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BoardPage } from './BoardPage';
 import { Category, type UserNotification } from '../types';
 
-const update = vi.fn();
+const changeCategory = vi.fn();
 const remove = vi.fn();
 let notifications: UserNotification[] = [];
 
 vi.mock('../hooks/useNotifications', () => ({
-  useNotifications: () => ({ notifications, isLoading: false, error: null, update, remove }),
+  useNotifications: () => ({
+    notifications,
+    isLoading: false,
+    error: null,
+    changeCategory,
+    remove,
+  }),
 }));
 
 function build(id: string, category: Category, header = `Card ${id}`): UserNotification {
@@ -98,7 +104,7 @@ describe('BoardPage', () => {
 
     drag('Deploy finished', 'Error');
 
-    expect(update).toHaveBeenCalledExactlyOnceWith('1', { category: Category.ERROR });
+    expect(changeCategory).toHaveBeenCalledExactlyOnceWith('1', Category.ERROR);
   });
 
   it('does nothing when a card is dropped back on its own column', () => {
@@ -108,7 +114,7 @@ describe('BoardPage', () => {
     drag('Cert expiring', 'Warning');
 
     // A no-op drop must not fire a pointless request.
-    expect(update).not.toHaveBeenCalled();
+    expect(changeCategory).not.toHaveBeenCalled();
   });
 
   it('highlights the column being dragged over and clears it after the drop', () => {
@@ -131,7 +137,7 @@ describe('BoardPage', () => {
 
     await user.click(screen.getByRole('button', { name: /move to next category/i }));
 
-    expect(update).toHaveBeenCalledExactlyOnceWith('1', { category: Category.WARNING });
+    expect(changeCategory).toHaveBeenCalledExactlyOnceWith('1', Category.WARNING);
   });
 
   it('moves a card one step to the left', async () => {
@@ -141,7 +147,7 @@ describe('BoardPage', () => {
 
     await user.click(screen.getByRole('button', { name: /move to previous category/i }));
 
-    expect(update).toHaveBeenCalledExactlyOnceWith('1', { category: Category.WARNING });
+    expect(changeCategory).toHaveBeenCalledExactlyOnceWith('1', Category.WARNING);
   });
 
   it('does not offer a move past either end of the range', () => {

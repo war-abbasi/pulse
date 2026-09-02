@@ -1,8 +1,9 @@
 import { memo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CATEGORY_STYLES } from '../../lib/category';
+import { categoryStyle } from '../../lib/category';
 import { cn } from '../../lib/cn';
 import { timeAgo } from '../../lib/time';
+import { getErrorMessage } from '../../services/api';
 import { Category, type UserNotification } from '../../types';
 
 interface Props {
@@ -26,7 +27,18 @@ export const BoardCard = memo(function BoardCard({
   onMove,
 }: Props) {
   const [isConfirming, setIsConfirming] = useState(false);
-  const style = CATEGORY_STYLES[notification.category];
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDelete = async () => {
+    setDeleteError(null);
+    try {
+      await onDelete(notification.id);
+    } catch (error) {
+      setDeleteError(getErrorMessage(error, 'Could not delete this notification.'));
+      setIsConfirming(false);
+    }
+  };
+  const style = categoryStyle(notification.category);
   const index = ORDER.indexOf(notification.category);
 
   const move = (delta: number) => {
@@ -65,6 +77,12 @@ export const BoardCard = memo(function BoardCard({
       <p className="mt-2 line-clamp-3 pl-4 text-xs leading-relaxed text-secondary">
         {notification.body}
       </p>
+
+      {deleteError && (
+        <p role="alert" className="mt-2 pl-4 text-xs font-semibold text-red-600 dark:text-red-400">
+          {deleteError}
+        </p>
+      )}
 
       <div className="mt-3 flex items-center justify-between gap-2 pl-4">
         <span className="text-[11px] text-muted">{timeAgo(notification.createdAt)}</span>
@@ -111,7 +129,7 @@ export const BoardCard = memo(function BoardCard({
           {isConfirming ? (
             <button
               type="button"
-              onClick={() => void onDelete(notification.id)}
+              onClick={handleDelete}
               className="rounded-md bg-red-600 px-2 py-0.5 text-[11px] font-bold text-white"
             >
               Sure?

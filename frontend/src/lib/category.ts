@@ -45,3 +45,12 @@ export const CATEGORY_STYLES: Record<Category, CategoryStyle> = {
 };
 
 export const CATEGORY_OPTIONS = [Category.INFO, Category.WARNING, Category.ERROR];
+
+/**
+ * Always use this rather than indexing CATEGORY_STYLES directly. The API
+ * enum-validates, but a legacy or hand-edited row with an unknown category
+ * would otherwise return undefined and take down the whole page.
+ */
+export function categoryStyle(category: Category): CategoryStyle {
+  return CATEGORY_STYLES[category] ?? CATEGORY_STYLES[Category.INFO];
+}

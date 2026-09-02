@@ -9,7 +9,7 @@ import { cn } from '../lib/cn';
 import { Category, type UserNotification } from '../types';
 
 export function BoardPage() {
-  const { notifications, isLoading, error, update, remove } = useNotifications();
+  const { notifications, isLoading, error, changeCategory, remove } = useNotifications();
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<Category | null>(null);
 
@@ -29,9 +29,11 @@ export function BoardPage() {
       const current = notifications.find((item) => item.id === id);
       // Dropping a card back in its own column is a no-op, not a request.
       if (!current || current.category === category) return;
-      void update(id, { category });
+      // changeCategory is optimistic and reports its own failures, so the
+      // card moves at once and never snaps back without explanation.
+      void changeCategory(id, category);
     },
-    [notifications, update],
+    [notifications, changeCategory],
   );
 
   const handleDelete = useCallback((id: string) => remove(id), [remove]);

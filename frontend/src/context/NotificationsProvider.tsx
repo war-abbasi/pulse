@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useAutoDismissInfo } from '../hooks/useAutoDismissInfo';
 import { getErrorMessage } from '../services/api';
 import { notificationService } from '../services/notificationService';
 import type {
+  Category,
   CreateNotificationPayload,
   UpdateNotificationPayload,
   UserNotification,
@@ -26,6 +28,16 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Mirrors the latest list so callbacks can read current state synchronously
+  // without taking `notifications` as a dependency, which would give every
+  // action a new identity on each change and defeat the memoised children.
+  // Synced in an effect rather than assigned during render, because writing a
+  // ref while rendering is not safe under concurrent rendering.
+  const latest = useRef(notifications);
+  useEffect(() => {
+    latest.current = notifications;
+  }, [notifications]);
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
@@ -74,16 +86,59 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       );
       try {
         await notificationService.update(id, { isClosed: true });
-      } catch {
+      } catch (err) {
         // Roll back if the server rejected it, so the UI never lies about
-        // what was actually saved.
+        // what was actually saved — and say so, rather than letting the
+        // banner silently reappear with no explanation.
         setNotifications((prev) =>
           prev.map((item) => (item.id === id ? { ...item, isClosed: false } : item)),
         );
+        setError(getErrorMessage(err, 'Could not dismiss that notification.'));
       }
     },
     [],
   );
+
+  /**
+   * Moving a card between board columns. Optimistic so the card follows the
+   * pointer immediately, with a rollback and a visible message if the server
+   * refuses — a drag that silently snapped back would look like a broken app.
+   */
+  const changeCategory = useCallback(
+    async (id: string, category: Category) => {
+      // Read the old value up front. Capturing it inside the setState updater
+      // would not work: React invokes updaters lazily, so the catch block
+      // below could run before the assignment ever happened and the rollback
+      // would silently do nothing.
+      const previous = latest.current.find((item) => item.id === id)?.category;
+
+      setNotifications((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, category } : item)),
+      );
+
+      try {
+        const updated = await notificationService.update(id, { category });
+        setNotifications((prev) => prev.map((item) => (item.id === id ? updated : item)));
+      } catch (err) {
+        if (previous) {
+          const restored = previous;
+          setNotifications((prev) =>
+            prev.map((item) => (item.id === id ? { ...item, category: restored } : item)),
+          );
+        }
+        setError(getErrorMessage(err, 'Could not move that notification.'));
+      }
+    },
+    [],
+  );
+
+  /** Lets a component report a failed action into the shared error slot. */
+  const reportError = useCallback((message: string) => setError(message), []);
+
+  // Lives here rather than in BannerStack so the 90-second rule keeps running
+  // on every screen. Tying it to the dashboard meant the timers stopped the
+  // moment the user opened the board.
+  useAutoDismissInfo(notifications, dismiss);
 
   const value = useMemo(
     () => ({
@@ -97,8 +152,22 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       update,
       remove,
       dismiss,
+      changeCategory,
+      reportError,
     }),
-    [isAuthenticated, notifications, isLoading, error, refresh, create, update, remove, dismiss],
+    [
+      isAuthenticated,
+      notifications,
+      isLoading,
+      error,
+      refresh,
+      create,
+      update,
+      remove,
+      dismiss,
+      changeCategory,
+      reportError,
+    ],
   );
 
   return (
