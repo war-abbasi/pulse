@@ -50,11 +50,9 @@ export class NotificationsController {
     return toNotificationResponse(await this.notificationsService.create(user.userId, dto));
   }
 
-  // PATCH is the accurate verb: every field is optional, and dismissing a
-  // banner sends only { isClosed: true }. PUT is accepted as an alias so the
-  // API stays usable by clients that expect it.
+  // PATCH is the accurate verb here: every field is optional, and dismissing
+  // a banner sends only { isClosed: true }.
   @Patch(':id')
-  @Put(':id')
   async update(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseObjectIdPipe) id: string,
@@ -63,6 +61,20 @@ export class NotificationsController {
     return toNotificationResponse(
       await this.notificationsService.update(user.userId, id, dto),
     );
+  }
+
+  /**
+   * PUT is accepted as an alias for clients that expect it. It needs its own
+   * handler rather than a second decorator on update(): stacking @Patch and
+   * @Put on one method registers only one of the two routes.
+   */
+  @Put(':id')
+  replace(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Body() dto: UpdateNotificationDto,
+  ): Promise<NotificationResponse> {
+    return this.update(user, id, dto);
   }
 
   /** 204: the delete succeeded and there is nothing meaningful to return. */
