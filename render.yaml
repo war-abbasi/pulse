@@ -1,0 +1,28 @@
+# Render Blueprint. Import this repo at dashboard.render.com/blueprints and
+# Render provisions the API from these settings instead of you filling in a form.
+services:
+  - type: web
+    name: pulse-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render terminates TLS at one proxy in front of the app, so req.ip is
+      # the real client only when exactly that one hop is trusted.
+      - key: TRUSTED_PROXY_HOPS
+        value: "1"
+      # Generated once by Render and kept; never commit a real secret.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 1d
+      # Set these two in the dashboard after the frontend and cluster exist.
+      - key: MONGO_URI
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false

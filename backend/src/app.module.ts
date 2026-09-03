@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module.js';
+import { HealthController } from './health/health.controller.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { UsersModule } from './users/users.module.js';
 
@@ -25,5 +26,6 @@ import { UsersModule } from './users/users.module.js';
     AuthModule,
     NotificationsModule,
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}

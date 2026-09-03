@@ -58,7 +58,8 @@ The default `VITE_API_URL` already points at the backend's default port.
 | `JWT_SECRET`     | yes      | `a-long-random-string`                          | Secret used to sign and verify JWTs. Use a long random value in production.  |
 | `JWT_EXPIRES_IN` | no       | `1d`                                            | Token lifetime (`60s`, `15m`, `1d`). Defaults to `1d`.                       |
 | `PORT`           | no       | `3000`                                          | Port the API listens on. Defaults to `3000`.                                 |
-| `CORS_ORIGIN`    | yes      | `http://localhost:5173`                         | The single origin allowed to call the API.                                   |
+| `CORS_ORIGIN`    | no       | `http://localhost:5173`                         | Origins allowed to call the API, comma-separated. Defaults to the Vite dev server. |
+| `TRUSTED_PROXY_HOPS` | no   | `0`                                             | Reverse proxies in front of the app. `0` locally, `1` on Render. Required for rate limiting to see the real client IP. |
 
 ### `frontend/.env`
 
@@ -152,6 +153,7 @@ All `/notifications` routes require `Authorization: Bearer <token>`.
 
 | Method            | Path                 | Success | Description                                     |
 | ----------------- | -------------------- | ------- | ----------------------------------------------- |
+| `GET`             | `/health`            | 200     | Liveness plus database state. Unauthenticated.  |
 | `POST`            | `/auth/register`     | 201     | Create an account and receive a token.          |
 | `POST`            | `/auth/login`        | 200     | Exchange credentials for a token.               |
 | `GET`             | `/auth/me`           | 200     | Confirm the current token is still valid.       |
@@ -182,6 +184,61 @@ banner sends only `{ "isClosed": true }`. `PUT` is accepted as an alias.
 
 The app shell is a persistent left sidebar that collapses into a drawer below
 1024px.
+
+---
+
+## Deployment
+
+The API runs on **Render**, the frontend on **Vercel**, and the database is a
+**MongoDB Atlas** free cluster. All three have free tiers that need no card.
+
+### 1. Database — MongoDB Atlas
+
+1. Create a free M0 cluster at [cloud.mongodb.com](https://cloud.mongodb.com).
+2. **Database Access** → add a user with a generated password.
+3. **Network Access** → allow `0.0.0.0/0`. Render's outbound IPs are not fixed
+   on the free plan, so an allowlist cannot be narrowed there; the database is
+   still protected by its credentials.
+4. Copy the connection string and append the database name:
+   `mongodb+srv://USER:PASS@cluster.mongodb.net/pulse-notifications?retryWrites=true&w=majority`
+
+### 2. Backend — Render
+
+Either import `render.yaml` as a Blueprint, or create a Web Service manually with:
+
+| Setting | Value |
+| ------- | ----- |
+| Root directory | `backend` |
+| Build command | `npm ci && npm run build` |
+| Start command | `npm run start:prod` |
+| Health check path | `/health` |
+
+Environment variables: `MONGO_URI` (from step 1), `JWT_SECRET` (generate with
+`node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`),
+`JWT_EXPIRES_IN=1d`, `TRUSTED_PROXY_HOPS=1`, and `CORS_ORIGIN` once the frontend
+URL exists. Leave `PORT` unset — Render provides it.
+
+### 3. Frontend — Vercel
+
+| Setting | Value |
+| ------- | ----- |
+| Root directory | `frontend` |
+| Framework preset | Vite |
+| Environment variable | `VITE_API_URL` = your Render URL |
+
+`vercel.json` rewrites unknown paths to `index.html`, so refreshing on `/board`
+serves the app instead of a 404.
+
+**Vite inlines `VITE_API_URL` at build time**, so changing it requires a
+redeploy — it is not read from the environment at runtime.
+
+### 4. Close the loop
+
+Set `CORS_ORIGIN` on Render to the Vercel URL and redeploy the API. Until that
+is done every browser request fails CORS, even though `curl` works fine.
+
+> On Render's free plan the API sleeps after 15 minutes idle, so the first
+> request after a pause takes roughly 30 seconds while it wakes.
 
 ---
 
